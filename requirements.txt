@@ -28,8 +28,7 @@ appnope==0.1.4
 argcomplete==3.6.2
 argon2-cffi==25.1.0
 argon2-cffi-bindings==25.1.0
-# Editable install with no version control (ariel==0.0.0)
--e /Users/prath/Documents/Uni/Evolutionary Computing/Assignment 2/gecko-neuroevolution-a2
+
 arrow==1.3.0
 asgiref==3.11.1
 astroid==3.3.11
