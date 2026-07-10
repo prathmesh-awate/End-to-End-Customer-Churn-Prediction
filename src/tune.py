@@ -8,7 +8,13 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GridSearchCV
 
-from src.preprocessing import preprocess_data
+from preprocessing import preprocess_data
+
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
+MODEL_DIR.mkdir(exist_ok=True)
 
 
 def tune_model(X_train, y_train):
@@ -67,10 +73,7 @@ def save_model(model):
     Save tuned model.
     """
 
-    joblib.dump(
-        model,
-        "/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/gradient_boosting.pkl"
-    )
+    joblib.dump(model, MODEL_DIR / "gradient_boosting.pkl")
 
     print("\nModel saved successfully.")
 

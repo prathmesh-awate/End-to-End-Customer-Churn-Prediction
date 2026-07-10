@@ -5,6 +5,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
+MODEL_DIR.mkdir(exist_ok=True)
 
 # ==========================================
 # Load Data
@@ -128,11 +133,7 @@ def split_data(df):
     y = df["Churn Value"]
 
     # Save feature names for Streamlit
-    joblib.dump(
-        X.columns.tolist(),
-        "/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/features.pkl"
-    )
-
+    joblib.dump(X.columns.tolist(), MODEL_DIR / "features.pkl")
     X_train, X_test, y_train, y_test = train_test_split(
         X,
         y,
@@ -163,10 +164,7 @@ def scale_data(X_train, X_test):
     X_train = scaler.fit_transform(X_train)
     X_test = scaler.transform(X_test)
 
-    joblib.dump(
-        scaler,
-        "/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/scaler.pkl"
-    )
+    joblib.dump(scaler, MODEL_DIR / "scaler.pkl")
 
     return X_train, X_test
 

@@ -1,47 +1,92 @@
 import streamlit as st
 import pandas as pd
 import joblib
+from pathlib import Path
 
-# -----------------------------
+from src.preprocessing import feature_engineering, encode_features
+
+# ==========================================
+# Paths
+# ==========================================
+
+BASE_DIR = Path(__file__).resolve().parent
+MODEL_DIR = BASE_DIR / "models"
+
+# ==========================================
 # Load Model
-# -----------------------------
-model = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/logistic_regression.pkl")
-scaler = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/scaler.pkl")
-features = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/features.pkl")
+# ==========================================
 
-# -----------------------------
-# Page Configuration
-# -----------------------------
+model = joblib.load(MODEL_DIR / "gradient_boosting.pkl")
+scaler = joblib.load(MODEL_DIR / "scaler.pkl")
+feature_columns = joblib.load(MODEL_DIR / "features.pkl")
+metrics = pd.read_csv(MODEL_DIR / "model_metrics.csv")
+
+# ==========================================
+# Page
+# ==========================================
+
 st.set_page_config(page_title="Customer Churn Prediction", page_icon="📊")
 
 st.title("📊 Customer Churn Prediction")
-st.write("Enter the customer details below and click **Predict**.")
 
-# -----------------------------
-# Numerical Inputs
-# -----------------------------
+st.write("Enter customer details below.")
+
+# ==========================================
+# Sidebar Metrics
+# ==========================================
+
+selected = metrics[metrics["Model"] == "Gradient Boost"].iloc[0]
+
+st.sidebar.header("Model Performance")
+
+st.sidebar.metric(
+    "Accuracy",
+    f"{selected['Accuracy']:.2%}"
+)
+
+st.sidebar.metric(
+    "Precision",
+    f"{selected['Precision']:.2%}"
+)
+
+st.sidebar.metric(
+    "Recall",
+    f"{selected['Recall']:.2%}"
+)
+
+st.sidebar.metric(
+    "F1 Score",
+    f"{selected['F1-Score']:.2%}"
+)
+
+st.sidebar.metric(
+    "ROC AUC",
+    f"{selected['AUC Score']:.2%}"
+)
+
+# ==========================================
+# Inputs
+# ==========================================
+
 tenure = st.number_input(
-    "Tenure (Months)",
-    min_value=0,
-    max_value=100,
-    value=12
+    "Tenure Months",
+    0,
+    100,
+    12
 )
 
 monthly = st.number_input(
     "Monthly Charges",
-    min_value=0.0,
+    0.0,
     value=70.0
 )
 
 total = st.number_input(
     "Total Charges",
-    min_value=0.0,
+    0.0,
     value=850.0
 )
 
-# -----------------------------
-# Categorical Inputs
-# -----------------------------
 gender = st.selectbox(
     "Gender",
     ["Male", "Female"]
@@ -109,7 +154,11 @@ movies = st.selectbox(
 
 contract = st.selectbox(
     "Contract",
-    ["Month-to-month", "One year", "Two year"]
+    [
+        "Month-to-month",
+        "One year",
+        "Two year"
+    ]
 )
 
 paperless = st.selectbox(
@@ -127,12 +176,12 @@ payment = st.selectbox(
     ]
 )
 
-# -----------------------------
+# ==========================================
 # Prediction
-# -----------------------------
+# ==========================================
+
 if st.button("Predict Churn"):
 
-    # Create DataFrame
     user = pd.DataFrame({
         "Tenure Months": [tenure],
         "Monthly Charges": [monthly],
@@ -155,21 +204,27 @@ if st.button("Predict Churn"):
         "Payment Method": [payment]
     })
 
-    # One-hot encode
-    user = pd.get_dummies(user)
+    # Same feature engineering as training
+    user = feature_engineering(user)
+
+    # Same encoding as training
+    user = encode_features(user)
 
     # Match training columns
-    user = user.reindex(columns=features, fill_value=0)
+    user = user.reindex(
+        columns=feature_columns,
+        fill_value=0
+    )
 
-    # Scale features
+    # Scale
     user_scaled = scaler.transform(user)
 
-    # Prediction
+    # Predict
     prediction = model.predict(user_scaled)[0]
+
     probability = model.predict_proba(user_scaled)[0][1]
 
-    # Display Result
-    st.markdown("---")
+    st.divider()
 
     if prediction == 1:
         st.error("⚠️ Customer is likely to churn.")
@@ -177,21 +232,22 @@ if st.button("Predict Churn"):
         st.success("✅ Customer is unlikely to churn.")
 
     st.metric(
-        label="Churn Probability",
-        value=f"{probability:.2%}"
+        "Churn Probability",
+        f"{probability:.2%}"
     )
 
     st.progress(float(probability))
 
-    st.write("### Prediction Summary")
+    st.subheader("Prediction Summary")
 
-    result = pd.DataFrame({
-        "Prediction": [
-            "Churn" if prediction == 1 else "No Churn"
-        ],
-        "Probability": [
-            f"{probability:.2%}"
-        ]
-    })
-
-    st.dataframe(result, use_container_width=True)
+    st.dataframe(
+        pd.DataFrame({
+            "Prediction": [
+                "Churn" if prediction == 1 else "No Churn"
+            ],
+            "Probability": [
+                f"{probability:.2%}"
+            ]
+        }),
+        use_container_width=True
+    )

@@ -5,9 +5,14 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 import xgboost as xgb
-from src.preprocessing import preprocess_data
+from preprocessing import preprocess_data
 import pandas as pd
 from sklearn.metrics import roc_auc_score, roc_curve
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+MODEL_DIR = BASE_DIR / "models"
+MODEL_DIR.mkdir(exist_ok=True)
 
 def train_model(model, X_train, y_train): 
     """
@@ -40,7 +45,7 @@ def save_model(model):
     """
     Save trained model.
     """
-    joblib.dump(model, "/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/logistic_regression.pkl")
+    joblib.dump(model, MODEL_DIR / "gradient_boosting.pkl")
     print("Model saved successfully.")
 
 
@@ -86,10 +91,11 @@ def main():
             "Confusion Matrix": confusion, 
             "AUC Score": auc
         })
-        if name == "Logistic Regression":
+        if name == "Gradient Boost":
             save_model(trained_model)
     results_df = pd.DataFrame(results)
-    
+    results_df.to_csv(MODEL_DIR / "model_metrics.csv", index=False)
+
     print("\nModel Comparison")
     print(results_df)
     """The comparison shows that Gradient Boosting achieved the best overall performance across all evaluation metrics. 
