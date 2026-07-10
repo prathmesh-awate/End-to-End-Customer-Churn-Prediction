@@ -5,9 +5,9 @@ import joblib
 # -----------------------------
 # Load Model
 # -----------------------------
-model = joblib.load("logistic_regression.pkl")
-scaler = joblib.load("scaler.pkl")
-features = joblib.load("features.pkl")
+model = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/logistic_regression.pkl")
+scaler = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/scaler.pkl")
+features = joblib.load("/Users/prath/Documents/End-to-End-Customer-Churn-Prediction/models/features.pkl")
 
 # -----------------------------
 # Page Configuration

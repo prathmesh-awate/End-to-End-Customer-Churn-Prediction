@@ -5,17 +5,15 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 import xgboost as xgb
-from lightgbm import LGBMClassifier
-from preprocessing import preprocess_data
+from src.preprocessing import preprocess_data
 import pandas as pd
-from catboost import CatBoostClassifier
 from sklearn.metrics import roc_auc_score, roc_curve
 
 def train_model(model, X_train, y_train): 
     """
     Train the Logistic Regression model.
     """
-   
+
     model.fit(X_train, y_train)
 
     return model
@@ -88,8 +86,10 @@ def main():
             "Confusion Matrix": confusion, 
             "AUC Score": auc
         })
+        if name == "Logistic Regression":
+            save_model(trained_model)
     results_df = pd.DataFrame(results)
-
+    
     print("\nModel Comparison")
     print(results_df)
     """The comparison shows that Gradient Boosting achieved the best overall performance across all evaluation metrics. 

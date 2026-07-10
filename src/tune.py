@@ -8,7 +8,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import GridSearchCV
 
-from preprocessing import preprocess_data
+from src.preprocessing import preprocess_data
 
 
 def tune_model(X_train, y_train):
