@@ -9,10 +9,13 @@ from preprocessing import preprocess_data
 import pandas as pd
 from sklearn.metrics import roc_auc_score, roc_curve
 from pathlib import Path
+import numpy as np
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_DIR = BASE_DIR / "models"
 MODEL_DIR.mkdir(exist_ok=True)
+
+
 
 def train_model(model, X_train, y_train): 
     """
@@ -61,6 +64,18 @@ def main():
         y_train,
         y_test
     ) = preprocess_data()
+    #shap
+    np.random.seed(42)
+
+    indices = np.random.choice(
+        X_train.shape[0],
+        size=min(100, X_train.shape[0]),
+        replace=False
+    )
+
+    background = X_train[indices]
+
+    joblib.dump(background, MODEL_DIR / "background.pkl")
 
     models = {
     "Logistic Regression": LogisticRegression(random_state=42, max_iter=1000),

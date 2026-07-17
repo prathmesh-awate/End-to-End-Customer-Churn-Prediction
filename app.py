@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import joblib
 from pathlib import Path
-
+import matplotlib.pyplot as plt
+import shap
 from src.preprocessing import feature_engineering, encode_features
+from src.explain import ModelExplainer
 
 # ==========================================
 # Paths
@@ -20,6 +22,12 @@ model = joblib.load(MODEL_DIR / "gradient_boosting.pkl")
 scaler = joblib.load(MODEL_DIR / "scaler.pkl")
 feature_columns = joblib.load(MODEL_DIR / "features.pkl")
 metrics = pd.read_csv(MODEL_DIR / "model_metrics.csv")
+
+
+explainer = ModelExplainer(
+    MODEL_DIR / "gradient_boosting.pkl",
+    MODEL_DIR / "background.pkl"
+)
 
 # ==========================================
 # Page
@@ -219,10 +227,17 @@ if st.button("Predict Churn"):
     # Scale
     user_scaled = scaler.transform(user)
 
+    user_scaled = pd.DataFrame(
+        user_scaled,
+        columns=feature_columns
+    )
+
     # Predict
     prediction = model.predict(user_scaled)[0]
 
     probability = model.predict_proba(user_scaled)[0][1]
+    # SHAP explanation
+    shap_values = explainer.explain(user_scaled)
 
     st.divider()
 
@@ -251,3 +266,46 @@ if st.button("Predict Churn"):
         }),
         use_container_width=True
     )
+    st.divider()
+    st.subheader("📋 Top Contributing Features")
+
+    # Create DataFrame of SHAP values
+    shap_df = pd.DataFrame({
+        "Feature": feature_columns,
+        "SHAP Value": shap_values.values[0]
+    })
+
+    # Keep only the most influential features
+    top_features = (
+        shap_df.reindex(
+            shap_df["SHAP Value"].abs().sort_values(ascending=False).index
+        )
+        .head(10)
+    )
+
+    # Show table
+    st.dataframe(
+        top_features,
+        use_container_width=True,
+        hide_index=True
+    )
+    st.subheader("📝 Model Explanation")
+
+    explanations = []
+
+    for _, row in top_features.head(5).iterrows():
+
+        feature = row["Feature"].replace("_", " ")
+        value = row["SHAP Value"]
+
+        if value > 0:
+            explanations.append(
+                f"• **{feature}** increased the predicted likelihood of churn."
+            )
+        else:
+            explanations.append(
+                f"• **{feature}** decreased the predicted likelihood of churn."
+            )
+
+    for text in explanations:
+        st.markdown(text)
